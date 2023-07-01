@@ -1,32 +1,40 @@
-const _ = require('lodash');
+const { functions, constant } = require('lodash');
+const throttle = require('lodash.throttle');
 const form = document.querySelector('.feedback-form');
-const emailInput = form.querySelector('input[name="email"]');
-const messageInput = form.querySelector('textarea[name="message"]');
 
-const updateStorage = _.throttle(() => {
-  const feedbackFormState = {
-    email: emailInput.value,
-    message: messageInput.value,
-  };
+const FEEDBACK_FORM = 'feedback-form-state';
+let feedbackFormState = {}
+
+const updateStorage = throttle((e) => {
+  feedbackFormState[e.target.name] = e.target.value.trim();
   localStorage.setItem(
-    'feedback-form-state',
+    FEEDBACK_FORM,
     JSON.stringify(feedbackFormState)
   );
 }, 500);
 
 const fillFormFields = () => {
-  const feedbackFormState = JSON.parse(
-    localStorage.getItem('feedback-form-state')
-  );
-  if (feedbackFormState) {
-    emailInput.value = feedbackFormState.email || '';
-    messageInput.value = feedbackFormState.message || '';
-  } else {
-    emailInput.value = '';
-    messageInput.value = '';
+  try {
+    const data = localStorage.getItem(FEEDBACK_FORM);
+    if (!data) return;
+    feedbackFormState = JSON.parse(data);
+    Object.entries(feedbackFormState).forEach(([key, val]) => {
+      form.elements[key].value = val;
+    });
+  } catch (error) {
+    console.log(message);
   }
-};
+}
+
+function onSubmit(e){
+  e.preventDefault();
+  console.log(feedbackFormState);
+  feedbackFormState = {};
+  form.reset();
+  localStorage.removeItem(FEEDBACK_FORM);
+}
 
 fillFormFields();
-emailInput.addEventListener('input', updateStorage);
-messageInput.addEventListener('input', updateStorage);
+form.addEventListener('input', updateStorage)
+form.addEventListener('submit', onSubmit)
+
